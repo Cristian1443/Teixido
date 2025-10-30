@@ -1,8 +1,12 @@
 import svgPaths from "../imports/svg-2fxeo0qy2u";
 import imgRectangle8 from "figma:asset/254b3ba5fa2fb52d54e1f8eccb31ce8237b140b8.png";
-import img from "figma:asset/64e22b9a1eb7f86d37f38817111a710f2aedc975.png";
+import Navigation from "./Navigation";
 
-export default function Dashboard() {
+interface DashboardProps {
+  onNavigate: (screen: string) => void;
+}
+
+export default function Dashboard({ onNavigate }: DashboardProps) {
   const salesData = [
     { id: 'P001', client: 'Cliente Nuevo 01', time: '14:30', amount: '450,00 €', type: 'paid' },
     { id: 'X001', client: 'Cliente Nuevo 01', time: '14:30', amount: '450,00 €', type: 'cancelled' },
@@ -20,108 +24,7 @@ export default function Dashboard() {
       minHeight: '800px',
       display: 'flex'
     }}>
-      {/* Sidebar */}
-      <div style={{
-        width: '80px',
-        backgroundColor: '#ffffff',
-        borderRight: '1px solid #e2e8f0',
-        borderTopRightRadius: '20px',
-        borderBottomRightRadius: '20px',
-        boxShadow: '100px 33px 30px 0px rgba(0,9,77,0), 64px 21px 27px 0px rgba(0,9,77,0.01), 36px 12px 23px 0px rgba(0,9,77,0.05), 16px 5px 17px 0px rgba(0,9,77,0.09), 4px 1px 9px 0px rgba(0,9,77,0.1)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingTop: '25px',
-        position: 'sticky',
-        top: 0,
-        height: '100vh'
-      }}>
-        {/* Logo */}
-        <div style={{
-          width: '48px',
-          height: '48px',
-          marginBottom: '32px'
-        }}>
-          <img 
-            alt="Logo" 
-            src={img}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover'
-            }}
-          />
-        </div>
-
-        {/* Menu items */}
-        {/* Panel - Active */}
-        <div style={{
-          width: '79px',
-          height: '63.672px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '14px',
-          backgroundColor: '#0C2ABF',
-          borderRadius: '10px'
-        }}>
-          <svg width="13.5" height="13.5" viewBox="0 0 15 15" fill="none" style={{ marginBottom: '8px' }}>
-            <path d={svgPaths.p31930300} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.1791" />
-          </svg>
-          <p style={{
-            fontFamily: 'Inter, sans-serif',
-            fontWeight: 400,
-            fontSize: '11.791px',
-            lineHeight: '11.791px',
-            color: '#ffffff',
-            margin: 0
-          }}>
-            Panel
-          </p>
-        </div>
-
-        {/* Ventas */}
-        <MenuItem icon={svgPaths.p23a48780} label="Ventas" />
-        
-        {/* Almacen */}
-        <MenuItemBox icon={svgPaths.p535fb40} label="Almacen" viewBox="0 0 15 13" />
-        
-        {/* Comunica */}
-        <MenuItem icon={svgPaths.p10a85360} label="Comunica" />
-        
-        {/* Agenda */}
-        <MenuItem icon={svgPaths.pc902380} label="Agenda" viewBox="0 0 15 16" />
-        
-        <div style={{ flex: 1 }} />
-        
-        {/* Settings */}
-        <div style={{
-          width: '79px',
-          height: '63.672px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '20px'
-        }}>
-          <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-            <g>
-              <path d={svgPaths.p3fbdf600} stroke="url(#paint0_linear_4_293)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.875" />
-              <path d={svgPaths.p3c0282f0} stroke="url(#paint1_linear_4_293)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.875" />
-            </g>
-            <defs>
-              <linearGradient id="paint0_linear_4_293" x1="3.75" x2="30.6846" y1="3.75" y2="17.668" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#092090" />
-                <stop offset="1" stopColor="#0C2ABF" />
-              </linearGradient>
-              <linearGradient id="paint1_linear_4_293" x1="11.25" x2="20.2282" y1="11.25" y2="15.8893" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#092090" />
-                <stop offset="1" stopColor="#0C2ABF" />
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-      </div>
+      <Navigation currentScreen="dashboard" onNavigate={onNavigate} />
 
       {/* Main content */}
       <div style={{
@@ -351,17 +254,20 @@ export default function Dashboard() {
               icon={svgPaths.p3b239480}
               label="Nueva Venta"
               bgColor="#0C2ABF"
+              onClick={() => onNavigate('ventasMenu')}
             />
             <ActionButton 
               icon={svgPaths.p2b865700}
               label="Informe del Día"
               bgColor="#0C2ABF"
+              onClick={() => onNavigate('resumenDia')}
             />
             <ActionButton 
               icon={svgPaths.pe420700}
               label="Sincronizar datos"
               bgColor="#0C2ABF"
               isSync
+              onClick={() => {}}
             />
           </div>
         </div>
@@ -594,24 +500,28 @@ function StatsCard({ title, value, change, changeType }: {
   );
 }
 
-function ActionButton({ icon, label, bgColor, isSync = false }: { 
+function ActionButton({ icon, label, bgColor, isSync = false, onClick }: { 
   icon: string; 
   label: string; 
   bgColor: string;
   isSync?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <div style={{
-      width: '87.957px',
-      height: '87.957px',
-      backgroundColor: bgColor,
-      borderRadius: '10.471px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      cursor: 'pointer',
-      position: 'relative'
-    }}>
+    <div 
+      onClick={onClick}
+      style={{
+        width: '87.957px',
+        height: '87.957px',
+        backgroundColor: bgColor,
+        borderRadius: '10.471px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        position: 'relative'
+      }}
+    >
       <div style={{
         display: 'flex',
         flexDirection: 'column',

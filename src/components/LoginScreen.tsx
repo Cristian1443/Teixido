@@ -1,7 +1,11 @@
 import imgPublicidadTeixidoFlorCoche from "figma:asset/328faa30d1d4991c86ab0e222dbfeb91bb4cd4f2.png";
 import imgRectangle30 from "figma:asset/53d1dabff9f07d1a5497a42cae4a47f48cf89be2.png";
 
-export default function LoginScreen() {
+interface LoginScreenProps {
+  onContinue: () => void;
+}
+
+export default function LoginScreen({ onContinue }: LoginScreenProps) {
   return (
     <div style={{
       backgroundColor: '#ffffff',
@@ -61,15 +65,18 @@ export default function LoginScreen() {
           </h1>
 
           {/* Vendor button */}
-          <button style={{
-            width: '100%',
-            padding: '15px 24px',
-            background: 'linear-gradient(to right, #8bd600, #c4ff57)',
-            border: 'none',
-            borderRadius: '30px',
-            cursor: 'pointer',
-            marginBottom: '68px'
-          }}>
+          <button 
+            onClick={onContinue}
+            style={{
+              width: '100%',
+              padding: '15px 24px',
+              background: 'linear-gradient(to right, #8bd600, #c4ff57)',
+              border: 'none',
+              borderRadius: '30px',
+              cursor: 'pointer',
+              marginBottom: '68px'
+            }}
+          >
             <p style={{
               fontFamily: 'Inter, sans-serif',
               fontWeight: 600,
@@ -125,14 +132,17 @@ export default function LoginScreen() {
           </div>
 
           {/* Admin button */}
-          <button style={{
-            width: '100%',
-            padding: '15px 24px',
-            backgroundColor: '#0C2ABF',
-            border: 'none',
-            borderRadius: '30px',
-            cursor: 'pointer'
-          }}>
+          <button 
+            onClick={onContinue}
+            style={{
+              width: '100%',
+              padding: '15px 24px',
+              backgroundColor: '#0C2ABF',
+              border: 'none',
+              borderRadius: '30px',
+              cursor: 'pointer'
+            }}
+          >
             <p style={{
               fontFamily: 'Inter, sans-serif',
               fontWeight: 600,

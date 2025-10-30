@@ -2,7 +2,11 @@ import svgPaths from "../imports/svg-h3d1s8p29g";
 import imgPublicidadTeixidoFlorCoche from "figma:asset/328faa30d1d4991c86ab0e222dbfeb91bb4cd4f2.png";
 import imgRectangle30 from "figma:asset/53d1dabff9f07d1a5497a42cae4a47f48cf89be2.png";
 
-export default function LoginWithEmail() {
+interface LoginWithEmailProps {
+  onContinue: () => void;
+}
+
+export default function LoginWithEmail({ onContinue }: LoginWithEmailProps) {
   return (
     <div style={{
       backgroundColor: '#ffffff',
@@ -128,14 +132,17 @@ export default function LoginWithEmail() {
           </div>
 
           {/* Continue button */}
-          <button style={{
-            width: '100%',
-            padding: '15px 24px',
-            backgroundColor: '#0C2ABF',
-            border: 'none',
-            borderRadius: '30px',
-            cursor: 'pointer'
-          }}>
+          <button 
+            onClick={onContinue}
+            style={{
+              width: '100%',
+              padding: '15px 24px',
+              backgroundColor: '#0C2ABF',
+              border: 'none',
+              borderRadius: '30px',
+              cursor: 'pointer'
+            }}
+          >
             <p style={{
               fontFamily: 'Inter, sans-serif',
               fontWeight: 600,
