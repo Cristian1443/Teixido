@@ -63,6 +63,7 @@ export default function NuevaVentaScreen({
   
   const [tipoNotaSeleccionado, setTipoNotaSeleccionado] = useState('Serie P (Oficiales)');
   const [formaPagoSeleccionado, setFormaPagoSeleccionado] = useState('Efectivo');
+  const [estadoPago, setEstadoPago] = useState<'pagado' | 'pendiente'>('pagado'); // NUEVO: Estado del pago
   
   // Lista de artículos en la venta
   const [articulosVenta, setArticulosVenta] = useState<ArticuloVenta[]>([]);
@@ -222,9 +223,10 @@ export default function NuevaVentaScreen({
       cliente: clienteSeleccionado,
       tipoNota: tipoNotaSeleccionado,
       formaPago: formaPagoSeleccionado,
+      estadoPago: estadoPago, // NUEVO: si está pagado o pendiente
       articulos: articulosVenta,
       totales: totales,
-      total: `${totales.total} €`,
+      total: `${totales.total.replace('.', ',')} €`, // totales.total ya es string con formato
       fecha: new Date().toISOString(),
       estado: esBorrador ? 'borrador' : 'pendiente',
       items: articulosVenta
@@ -1150,6 +1152,98 @@ export default function NuevaVentaScreen({
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* NUEVO: Estado de Pago (Pagado/Pendiente) */}
+              <div style={{
+                position: 'relative',
+                width: '351px',
+                marginTop: '20px'
+              }}>
+                <p style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  color: '#1a1a1a',
+                  margin: 0,
+                  marginBottom: '10px'
+                }}>
+                  Estado del Pago
+                </p>
+
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  alignItems: 'center',
+                  width: '100%'
+                }}>
+                  <button 
+                    onClick={() => setEstadoPago('pagado')}
+                    style={{
+                      flex: 1,
+                      padding: '12px 20px',
+                      borderRadius: '8px',
+                      border: estadoPago === 'pagado' ? 'none' : '1px solid #e2e8f0',
+                      backgroundColor: estadoPago === 'pagado' ? '#07BC13' : '#ffffff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s',
+                      boxShadow: estadoPago === 'pagado' ? '0 2px 8px rgba(7, 188, 19, 0.3)' : 'none'
+                    }}
+                  >
+                    <span style={{
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      color: estadoPago === 'pagado' ? '#ffffff' : '#07BC13'
+                    }}>
+                      ✓ Pagado
+                    </span>
+                  </button>
+
+                  <button 
+                    onClick={() => setEstadoPago('pendiente')}
+                    style={{
+                      flex: 1,
+                      padding: '12px 20px',
+                      borderRadius: '8px',
+                      border: estadoPago === 'pendiente' ? 'none' : '1px solid #e2e8f0',
+                      backgroundColor: estadoPago === 'pendiente' ? '#F59F0A' : '#ffffff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s',
+                      boxShadow: estadoPago === 'pendiente' ? '0 2px 8px rgba(245, 159, 10, 0.3)' : 'none'
+                    }}
+                  >
+                    <span style={{
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      color: estadoPago === 'pendiente' ? '#ffffff' : '#F59F0A'
+                    }}>
+                      ⏳ Pendiente
+                    </span>
+                  </button>
+                </div>
+
+                {/* Mensaje informativo */}
+                <p style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '10px',
+                  color: '#697b92',
+                  margin: '6px 0 0 0',
+                  fontStyle: 'italic'
+                }}>
+                  {estadoPago === 'pagado' 
+                    ? '✅ Venta pagada - No se creará cobro pendiente' 
+                    : '📋 Se creará cobro pendiente para este cliente'}
+                </p>
               </div>
             </div>
           </div>

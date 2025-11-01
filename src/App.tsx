@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import LoginScreen from './components/LoginScreen';
 import LoginWithEmail from './components/LoginWithEmail';
 import Dashboard from './components/Dashboard';
+import { useERPSync } from './hooks/useERPSync';
 import VentasMenuScreen from './components/VentasMenuScreen';
 import VentasScreen from './components/VentasScreen';
 import NuevaVentaScreen from './components/NuevaVentaScreen';
@@ -123,6 +124,16 @@ export default function App() {
   const [ventaActual, setVentaActual] = useState<any>(null);
   const [clienteSeleccionado, setClienteSeleccionado] = useState<any>(null);
   const [cobranzaActual, setCobranzaActual] = useState<any>(null);
+
+  // INTEGRACIÓN CON ERP
+  const { 
+    syncStatus, 
+    modoOffline, 
+    sincronizarClientes, 
+    sincronizarArticulos,
+    enviarVentaAlERP,
+    registrarPagoEnERP
+  } = useERPSync();
 
   // ESTADO GLOBAL - Datos compartidos entre todas las pantallas
   const [gastos, setGastos] = useState<Gasto[]>([
@@ -293,6 +304,28 @@ export default function App() {
     { id: 'NA005', tipo: 'Intercambio Salida', fecha: 'Hace 5 días', usuario: 'Carlos Ruiz', articulos: 18, observaciones: 'Envío a tienda Barcelona' },
   ]);
 
+  // SINCRONIZACIÓN INICIAL CON ERP
+  useEffect(() => {
+    const cargarDatosDelERP = async () => {
+      // Sincronizar clientes
+      const clientesERP = await sincronizarClientes();
+      if (clientesERP && clientesERP.length > 0) {
+        setClientes(clientesERP);
+      }
+      
+      // Sincronizar artículos
+      const articulosERP = await sincronizarArticulos();
+      if (articulosERP && articulosERP.length > 0) {
+        setArticulos(articulosERP);
+      }
+    };
+    
+    // Ejecutar después del primer render
+    const timeout = setTimeout(cargarDatosDelERP, 1000);
+    
+    return () => clearTimeout(timeout);
+  }, [sincronizarClientes, sincronizarArticulos]);
+
   // Funciones para actualizar el estado global
   const handleAddGasto = (gasto: Gasto) => {
     setGastos([gasto, ...gastos]);
@@ -334,7 +367,7 @@ export default function App() {
     setNotasAlmacen([nota, ...notasAlmacen]);
   };
 
-  const handleSaveVenta = (ventaData: any) => {
+  const handleSaveVenta = async (ventaData: any) => {
     setVentaActual(ventaData);
     
     const clienteId = typeof ventaData.cliente === 'object' ? ventaData.cliente?.id : undefined;
@@ -346,9 +379,10 @@ export default function App() {
     const notaId = `P${String(notasVenta.length + 1).padStart(3, '0')}`;
     const cobroId = `C${String(cobros.length + 1).padStart(3, '0')}`;
     
-    // Determinar si se debe crear un cobro pendiente
-    // Solo crear cobro si NO es efectivo (pago inmediato)
-    const debeCrearCobro = ventaData.formaPago !== 'Efectivo';
+    // NUEVO: Determinar si se debe crear un cobro según el estadoPago
+    // estadoPago puede ser 'pagado' o 'pendiente'
+    const estadoPagoVenta = ventaData.estadoPago || 'pagado'; // Default pagado
+    const debeCrearCobro = estadoPagoVenta === 'pendiente';
     
     // 1. Crear NotaVenta
     const nuevaNota: NotaVenta = {
@@ -358,15 +392,16 @@ export default function App() {
       precio: ventaData.total || '0,00 €',
       fecha: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
       items: ventaData.items || [],
-      estado: 'pendiente',
+      estado: estadoPagoVenta === 'pagado' ? 'cerrada' : 'pendiente', // Si está pagado, cerrar la nota
       generoCobro: debeCrearCobro,
       cobroId: debeCrearCobro ? cobroId : undefined,
       formaPago: ventaData.formaPago
     };
     handleAddNotaVenta(nuevaNota);
     
-    // 2. Crear Cobro Pendiente automáticamente (si aplica)
-    if (debeCrearCobro) {
+    // 2. Crear Cobro según el estado de pago
+    if (estadoPagoVenta === 'pendiente') {
+      // Crear cobro PENDIENTE
       const nuevoCobro: Cobro = {
         id: cobroId,
         cliente: clienteNombre,
@@ -379,9 +414,30 @@ export default function App() {
       };
       handleAddCobro(nuevoCobro);
       
-      console.log('✅ Cobro pendiente creado automáticamente:', nuevoCobro);
+      console.log('⏳ Cobro PENDIENTE creado:', nuevoCobro);
     } else {
-      console.log('💵 Venta en efectivo - No se creó cobro pendiente');
+      // Crear cobro PAGADO (para registro)
+      const nuevoCobro: Cobro = {
+        id: cobroId,
+        cliente: clienteNombre,
+        clienteId: clienteId,
+        monto: ventaData.total || '0,00 €',
+        fecha: 'Hoy',
+        estado: 'pagado',
+        notaVentaId: notaId,
+        formaPago: ventaData.formaPago
+      };
+      handleAddCobro(nuevoCobro);
+      
+      console.log('✅ Cobro PAGADO registrado:', nuevoCobro);
+    }
+    
+    // 3. ENVIAR AL ERP (modo async - no bloquear si falla)
+    if (!modoOffline) {
+      const resultado = await enviarVentaAlERP(ventaData);
+      if (resultado) {
+        console.log('🌐 Venta sincronizada con ERP');
+      }
     }
   };
 
@@ -446,6 +502,8 @@ export default function App() {
           notasVenta={notasVenta}
           gastos={gastos}
           cobros={cobros}
+          syncStatus={syncStatus}
+          modoOffline={modoOffline}
         />
       )}
       {currentScreen === 'ventasMenu' && <VentasMenuScreen onNavigate={setCurrentScreen} />}
