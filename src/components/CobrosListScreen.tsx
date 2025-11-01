@@ -39,19 +39,23 @@ export default function CobrosListScreen({ onNavigate, onSelectCliente, cobros, 
 
   const { cobradoTotal, totalGeneral, porcentaje } = calcularTotales();
 
-  // Filtrar clientes que tienen cobros pendientes (para el modal)
+  // Filtrar clientes que tienen cobros pendientes (para el modal) - USANDO clienteId
   const clientesConCobrosPendientes = clientes
     .filter(cliente => {
       return cobros.some(cobro => 
         cobro.estado === 'pendiente' && 
-        (cobro.cliente.includes(cliente.nombre) || cobro.cliente.includes(cliente.empresa))
+        (cobro.clienteId === cliente.id || 
+         cobro.cliente.includes(cliente.nombre) || 
+         cobro.cliente.includes(cliente.empresa))
       );
     })
     .map(cliente => {
-      // Encontrar el cobro pendiente de este cliente
+      // Encontrar el cobro pendiente de este cliente (por ID preferentemente)
       const cobroPendiente = cobros.find(cobro => 
         cobro.estado === 'pendiente' && 
-        (cobro.cliente.includes(cliente.nombre) || cobro.cliente.includes(cliente.empresa))
+        (cobro.clienteId === cliente.id || 
+         cobro.cliente.includes(cliente.nombre) || 
+         cobro.cliente.includes(cliente.empresa))
       );
       const montoPendiente = cobroPendiente 
         ? parseFloat(cobroPendiente.monto.replace(',', '.').replace('€', '').trim() || '0')

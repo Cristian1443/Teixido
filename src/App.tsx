@@ -61,6 +61,11 @@ export interface NotaVenta {
   fecha: string;
   items?: any[];
   estado?: 'pendiente' | 'cerrada' | 'anulada';
+  // Campos adicionales para tracking y relaciones
+  clienteId?: string;     // ID del cliente
+  generoCobro?: boolean;  // Si generó un cobro pendiente automáticamente
+  cobroId?: string;       // ID del cobro asociado (si existe)
+  formaPago?: string;     // Método de pago usado
 }
 
 export interface Cobro {
@@ -69,6 +74,10 @@ export interface Cobro {
   monto: string;
   fecha: string;
   estado: 'pendiente' | 'pagado';
+  // Campos adicionales para tracking y relaciones
+  notaVentaId?: string;  // ID de la venta que generó este cobro
+  clienteId?: string;     // ID del cliente (más confiable que el nombre)
+  formaPago?: string;     // Método de pago esperado
 }
 
 export interface Documento {
@@ -127,20 +136,120 @@ export default function App() {
   ]);
 
   const [notasVenta, setNotasVenta] = useState<NotaVenta[]>([
-    { id: 'P001', cliente: 'Distribuciones Rivera S.L.', precio: '450,00 €', fecha: '08:45', estado: 'cerrada' },
-    { id: 'P002', cliente: 'Almacenes López S.A.', precio: '320,50 €', fecha: '10:20', estado: 'cerrada' },
-    { id: 'P003', cliente: 'Transportes García S.L.', precio: '275,00 €', fecha: '11:30', estado: 'pendiente' },
-    { id: 'P004', cliente: 'Panaderías Martín S.L.', precio: '180,00 €', fecha: '13:15', estado: 'cerrada' },
-    { id: 'P005', cliente: 'Supermercados Central', precio: '525,00 €', fecha: '15:00', estado: 'pendiente' },
-    { id: 'P006', cliente: 'Distribuciones Norte', precio: '395,50 €', fecha: '16:20', estado: 'cerrada' },
-    { id: 'P007', cliente: 'Alimentación Sur', precio: '304,00 €', fecha: '17:45', estado: 'pendiente' },
+    { 
+      id: 'P001', 
+      cliente: 'Distribuciones Rivera S.L.', 
+      clienteId: '150',
+      precio: '450,00 €', 
+      fecha: '08:45', 
+      estado: 'cerrada',
+      generoCobro: true,
+      cobroId: 'C001',
+      formaPago: 'Transferencia Bancaria'
+    },
+    { 
+      id: 'P002', 
+      cliente: 'Almacenes López S.A.', 
+      clienteId: '200',
+      precio: '320,50 €', 
+      fecha: '10:20', 
+      estado: 'cerrada',
+      generoCobro: false,
+      formaPago: 'Efectivo'
+    },
+    { 
+      id: 'P003', 
+      cliente: 'ALVAREZ C. CONSUELO E HIJOS', 
+      clienteId: '100',
+      precio: '275,00 €', 
+      fecha: '11:30', 
+      estado: 'pendiente',
+      generoCobro: true,
+      cobroId: 'C002',
+      formaPago: 'Tarjeta de Crédito'
+    },
+    { 
+      id: 'P004', 
+      cliente: 'Supermercado El Pino', 
+      clienteId: '302',
+      precio: '180,00 €', 
+      fecha: '13:15', 
+      estado: 'cerrada',
+      generoCobro: false,
+      formaPago: 'Efectivo'
+    },
+    { 
+      id: 'P005', 
+      cliente: 'Boutique Encanto S.L.', 
+      clienteId: '105',
+      precio: '525,00 €', 
+      fecha: '15:00', 
+      estado: 'pendiente',
+      generoCobro: true,
+      cobroId: 'C003',
+      formaPago: 'Bizum'
+    },
+    { 
+      id: 'P006', 
+      cliente: 'La Taberna', 
+      clienteId: '902',
+      precio: '395,50 €', 
+      fecha: '16:20', 
+      estado: 'cerrada',
+      generoCobro: false,
+      formaPago: 'Efectivo'
+    },
+    { 
+      id: 'P007', 
+      cliente: 'Restaurante La Gallina Loca', 
+      clienteId: '300',
+      precio: '304,00 €', 
+      fecha: '17:45', 
+      estado: 'pendiente',
+      generoCobro: true,
+      cobroId: 'C004',
+      formaPago: 'Tarjeta de Débito'
+    },
   ]);
 
   const [cobros, setCobros] = useState<Cobro[]>([
-    { id: 'C001', cliente: 'Distribuciones Rivera S.L.', monto: '450,00 €', fecha: 'Hoy', estado: 'pagado' },
-    { id: 'C002', cliente: 'Transportes García S.L.', monto: '275,00 €', fecha: 'Hace 2 días', estado: 'pendiente' },
-    { id: 'C003', cliente: 'Supermercados Central', monto: '525,00 €', fecha: 'Hoy', estado: 'pendiente' },
-    { id: 'C004', cliente: 'Alimentación Sur', monto: '304,00 €', fecha: 'Hace 1 día', estado: 'pendiente' },
+    { 
+      id: 'C001', 
+      cliente: 'Distribuciones Rivera S.L.', 
+      clienteId: '150',  // Match con cliente existente
+      monto: '450,00 €', 
+      fecha: 'Hoy', 
+      estado: 'pagado',
+      notaVentaId: 'P001',
+      formaPago: 'Transferencia Bancaria'
+    },
+    { 
+      id: 'C002', 
+      cliente: 'ALVAREZ C. CONSUELO E HIJOS', 
+      clienteId: '100',  // Match con cliente existente
+      monto: '275,00 €', 
+      fecha: 'Hace 2 días', 
+      estado: 'pendiente',
+      formaPago: 'Tarjeta de Crédito'
+    },
+    { 
+      id: 'C003', 
+      cliente: 'Boutique Encanto S.L.', 
+      clienteId: '105',  // Match con cliente existente
+      monto: '525,00 €', 
+      fecha: 'Hoy', 
+      estado: 'pendiente',
+      formaPago: 'Bizum'
+    },
+    { 
+      id: 'C004', 
+      cliente: 'Restaurante La Gallina Loca', 
+      clienteId: '300',  // Match con cliente existente
+      monto: '304,00 €', 
+      fecha: 'Hace 1 día', 
+      estado: 'pendiente',
+      formaPago: 'Tarjeta de Débito'
+    },
   ]);
 
   const [documentos, setDocumentos] = useState<Documento[]>([
@@ -227,16 +336,53 @@ export default function App() {
 
   const handleSaveVenta = (ventaData: any) => {
     setVentaActual(ventaData);
-    // Agregar a la lista de notas de venta
+    
+    const clienteId = typeof ventaData.cliente === 'object' ? ventaData.cliente?.id : undefined;
+    const clienteNombre = typeof ventaData.cliente === 'string' 
+      ? ventaData.cliente 
+      : (ventaData.cliente?.empresa || ventaData.cliente?.nombre || 'Cliente sin especificar');
+    
+    // Generar IDs
+    const notaId = `P${String(notasVenta.length + 1).padStart(3, '0')}`;
+    const cobroId = `C${String(cobros.length + 1).padStart(3, '0')}`;
+    
+    // Determinar si se debe crear un cobro pendiente
+    // Solo crear cobro si NO es efectivo (pago inmediato)
+    const debeCrearCobro = ventaData.formaPago !== 'Efectivo';
+    
+    // 1. Crear NotaVenta
     const nuevaNota: NotaVenta = {
-      id: `P${String(notasVenta.length + 1).padStart(3, '0')}`,
-      cliente: typeof ventaData.cliente === 'string' ? ventaData.cliente : (ventaData.cliente?.nombre || 'Cliente sin especificar'),
+      id: notaId,
+      cliente: clienteNombre,
+      clienteId: clienteId,
       precio: ventaData.total || '0,00 €',
       fecha: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
       items: ventaData.items || [],
-      estado: 'pendiente'
+      estado: 'pendiente',
+      generoCobro: debeCrearCobro,
+      cobroId: debeCrearCobro ? cobroId : undefined,
+      formaPago: ventaData.formaPago
     };
     handleAddNotaVenta(nuevaNota);
+    
+    // 2. Crear Cobro Pendiente automáticamente (si aplica)
+    if (debeCrearCobro) {
+      const nuevoCobro: Cobro = {
+        id: cobroId,
+        cliente: clienteNombre,
+        clienteId: clienteId,
+        monto: ventaData.total || '0,00 €',
+        fecha: 'Hoy',
+        estado: 'pendiente',
+        notaVentaId: notaId,
+        formaPago: ventaData.formaPago
+      };
+      handleAddCobro(nuevoCobro);
+      
+      console.log('✅ Cobro pendiente creado automáticamente:', nuevoCobro);
+    } else {
+      console.log('💵 Venta en efectivo - No se creó cobro pendiente');
+    }
   };
 
   const handleModificarVenta = () => {

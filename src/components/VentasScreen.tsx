@@ -22,21 +22,25 @@ export default function VentasScreen({ onNavigate, clientes: clientesGlobales, c
   const [filterBy, setFilterBy] = useState<'todos' | 'cobros' | 'sin-cobros'>('todos');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
 
-  // Función mejorada para buscar cobros de un cliente
+  // Función mejorada para buscar cobros de un cliente (USANDO clienteId)
   const buscarCobrosDeCliente = (cliente: ClienteGlobal) => {
     return cobros.filter(c => {
       if (c.estado !== 'pendiente') return false;
       
+      // Primero intentar match por ID (más confiable)
+      if (c.clienteId && c.clienteId === cliente.id) {
+        return true;
+      }
+      
+      // Fallback: match por nombre (para cobros legacy sin clienteId)
       const nombreCliente = cliente.nombre.toLowerCase().trim();
       const empresaCliente = cliente.empresa.toLowerCase().trim();
       const nombreCobro = c.cliente.toLowerCase().trim();
       
-      // Buscar coincidencias más flexibles
       return nombreCobro.includes(nombreCliente) || 
              nombreCliente.includes(nombreCobro) ||
              nombreCobro.includes(empresaCliente) ||
              empresaCliente.includes(nombreCobro) ||
-             // También buscar por palabras clave (ej: "Rivera" en ambos)
              nombreCliente.split(' ').some(palabra => 
                palabra.length > 3 && nombreCobro.includes(palabra)
              ) ||

@@ -67,25 +67,31 @@ export default function CobrosScreen({ onNavigate, clienteSeleccionado, onConfir
       subtotal: subtotal
     };
 
-    // Buscar si existe un cobro pendiente para este cliente y actualizarlo
+    // Buscar si existe un cobro pendiente para este cliente (usando ID)
     const cobroPendiente = cobros.find(c => 
       c.estado === 'pendiente' && 
-      (c.cliente.includes(clienteSeleccionado.empresa) || c.cliente.includes(clienteSeleccionado.nombre))
+      (c.clienteId === clienteSeleccionado.id || 
+       c.cliente.includes(clienteSeleccionado.empresa) || 
+       c.cliente.includes(clienteSeleccionado.nombre))
     );
 
     if (cobroPendiente && onUpdateCobro) {
       // ACTUALIZAR el cobro existente de 'pendiente' a 'pagado'
       onUpdateCobro(cobroPendiente.id, 'pagado');
+      console.log('✅ Cobro actualizado a PAGADO:', cobroPendiente.id);
     } else if (onAddCobro) {
       // Si no existe cobro pendiente, crear uno nuevo como pagado
       const nuevoCobro = {
         id: `C${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
         cliente: clienteSeleccionado.empresa || clienteSeleccionado.nombre,
+        clienteId: clienteSeleccionado.id,
         monto: `${subtotal.toFixed(2).replace('.', ',')} €`,
         fecha: 'Hoy',
-        estado: 'pagado' as const
+        estado: 'pagado' as const,
+        formaPago: selectedPaymentMethod
       };
       onAddCobro(nuevoCobro);
+      console.log('✅ Nuevo cobro creado como PAGADO:', nuevoCobro);
     }
 
     // Actualizar el estado de las notas de venta a 'cerrada'
