@@ -19,23 +19,35 @@ export function getSessionId(): string {
   return SESSION_ID;
 }
 
+export function isERPEnabled(): boolean {
+  return ERP_ENABLED;
+}
+
+export function getERPStatus(): { enabled: boolean; baseUrl: string; sessionId: string } {
+  return {
+    enabled: ERP_ENABLED,
+    baseUrl: ERP_BASE_URL,
+    sessionId: SESSION_ID
+  };
+}
+
 // ============================================================================
 // CLIENTES
 // ============================================================================
 
 export interface ClienteERP {
   Id: number;
-  Tipo: number;
+  Tipo?: number;
   NIF: string;
   Nombre: string;
   Apellido1?: string;
   Apellido2?: string;
   RazonSocial: string;
-  RegFiscal: number;
-  ID_Pais: number;
-  ID_Provincia: number;
+  RegFiscal?: number;
+  ID_Pais?: number;
+  ID_Provincia?: number;
   Provincia?: string;
-  ID_Localidad: number;
+  ID_Localidad?: number;
   Localidad?: string;
   CPostal: string;
   Direccion: string;
@@ -47,6 +59,9 @@ export interface ClienteERP {
   ID_Agente2?: number;
   ID_Agente3?: number;
   ID_MetodoPago?: number;
+  DtoComercial?: number;
+  DtoPPago?: number;
+  FormaPago?: number;
 }
 
 export async function getClientes(
@@ -84,6 +99,17 @@ export async function getClientes(
 }
 
 export async function crearCliente(cliente: Partial<ClienteERP>): Promise<any> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE - Cliente guardado localmente (ERP deshabilitado)');
+    return {
+      InfoError: {
+        Codigo: 0,
+        Descripcion: 'OK - Modo Offline'
+      },
+      Id: Math.floor(Math.random() * 10000)
+    };
+  }
+
   try {
     const response = await fetch(`${ERP_BASE_URL}/NuevoClienteWS`, {
       method: 'POST',
@@ -156,6 +182,11 @@ export async function getArticulos(fecha?: string, hora?: string): Promise<Artic
 }
 
 export async function getStockArticulos(id_articulo: number = 0): Promise<any> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE - Usando stock local (ERP deshabilitado)');
+    return [];
+  }
+
   try {
     const url = `${ERP_BASE_URL}/GetStockArticulosWS?x=${SESSION_ID}&id_articulo=${id_articulo}`;
     
@@ -183,6 +214,17 @@ export interface MetodoPagoERP {
 }
 
 export async function getMetodosPago(): Promise<MetodoPagoERP[]> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE - Usando métodos de pago por defecto (ERP deshabilitado)');
+    return [
+      { Id: 1, Nombre: 'Efectivo' },
+      { Id: 2, Nombre: 'Tarjeta de Débito' },
+      { Id: 3, Nombre: 'Tarjeta de Crédito' },
+      { Id: 5, Nombre: 'Transferencia Bancaria' },
+      { Id: 8, Nombre: 'Bizum' }
+    ];
+  }
+
   try {
     const url = `${ERP_BASE_URL}/GetMetodosPagoWS?x=${SESSION_ID}`;
     
@@ -264,6 +306,19 @@ export interface DocumentoCliente {
 }
 
 export async function crearDocumentoVenta(documento: DocumentoCliente): Promise<any> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE - Documento guardado localmente (ERP deshabilitado)');
+    // Simular respuesta exitosa del ERP
+    return {
+      InfoError: {
+        Codigo: 0,
+        Descripcion: 'OK - Modo Offline'
+      },
+      Id: Math.floor(Math.random() * 10000), // ID simulado
+      Numero: Math.floor(Math.random() * 1000)
+    };
+  }
+
   try {
     const body = {
       sesionwcf: SESSION_ID,
@@ -296,6 +351,16 @@ export async function crearDocumentoVenta(documento: DocumentoCliente): Promise<
 }
 
 export async function actualizarDocumento(id: number, cambios: any): Promise<any> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE - Documento actualizado localmente (ERP deshabilitado)');
+    return {
+      InfoError: {
+        Codigo: 0,
+        Descripcion: 'OK - Modo Offline'
+      }
+    };
+  }
+
   try {
     const response = await fetch(`${ERP_BASE_URL}/UpdateDocClienteWS`, {
       method: 'POST',
@@ -335,6 +400,17 @@ export interface NuevoPago {
 }
 
 export async function registrarPago(pago: NuevoPago): Promise<any> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE - Pago guardado localmente (ERP deshabilitado)');
+    return {
+      InfoError: {
+        Codigo: 0,
+        Descripcion: 'OK - Modo Offline'
+      },
+      Id: Math.floor(Math.random() * 10000)
+    };
+  }
+
   try {
     console.log('💰 Registrando pago en ERP:', pago);
     
@@ -372,6 +448,11 @@ export async function getHistorialPedidos(
   fechaDesde: string,
   fechaHasta: string
 ): Promise<any> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE - Sin historial disponible (ERP deshabilitado)');
+    return [];
+  }
+
   try {
     const url = `${ERP_BASE_URL}/GetHistorialPedidosWS?x=${SESSION_ID}&id_cliente=${id_cliente}&fechadesde=${fechaDesde}&fechahasta=${fechaHasta}`;
     
@@ -391,6 +472,11 @@ export async function getHistorialPedidos(
 }
 
 export async function getEstadoPedidos(pedidos: Array<{ Id?: number; Referencia?: string }>): Promise<any> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE - Sin estado de pedidos disponible (ERP deshabilitado)');
+    return [];
+  }
+
   try {
     const response = await fetch(`${ERP_BASE_URL}/EstadoPedidosWS`, {
       method: 'POST',
@@ -419,6 +505,15 @@ export async function getEstadoPedidos(pedidos: Array<{ Id?: number; Referencia?
 // ============================================================================
 
 export async function getNextNumDocs(): Promise<any> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE - Usando numeración local (ERP deshabilitado)');
+    return {
+      NumeroFactura: Math.floor(Math.random() * 1000),
+      NumeroPedido: Math.floor(Math.random() * 1000),
+      NumeroAlbaran: Math.floor(Math.random() * 1000)
+    };
+  }
+
   try {
     const url = `${ERP_BASE_URL}/GetNextNumDocsWS?x=${SESSION_ID}`;
     
@@ -436,6 +531,11 @@ export async function getNextNumDocs(): Promise<any> {
 }
 
 export async function getVersion(): Promise<string> {
+  if (!ERP_ENABLED) {
+    console.log('💾 Modo OFFLINE (ERP deshabilitado)');
+    return 'Modo Offline - ERP deshabilitado';
+  }
+
   try {
     const url = `${ERP_BASE_URL}/GetVersionWS?x=${SESSION_ID}`;
     
