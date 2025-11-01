@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import svgPaths from '../imports/svg-9ynjxh4cz8';
 import Navigation from './Navigation';
+import { printerService, PrinterConfig } from '../services/printer.service';
+import { syncService } from '../services/sync.service';
+import { agendaService } from '../services/agenda.service';
 
 interface ConfiguracionScreenProps {
   onNavigate?: (screen: string) => void;
@@ -10,11 +13,14 @@ type ModalType = 'printer' | 'user' | 'bell' | 'sync' | 'globe' | 'database' | '
 
 export default function ConfiguracionScreen({ onNavigate }: ConfiguracionScreenProps) {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
-  const [printerSettings, setPrinterSettings] = useState({
-    enabled: true,
-    autoprint: false,
-    copies: 1
+  const [printerSettings, setPrinterSettings] = useState<PrinterConfig>({
+    type: 'bluetooth',
+    deviceName: '',
+    address: '',
+    port: 9100,
+    paperWidth: 80
   });
+  const [printerConnected, setPrinterConnected] = useState(false);
   const [userProfile, setUserProfile] = useState({
     nombre: 'Juan Pérez',
     email: 'juan.perez@4ventas.com',
@@ -62,20 +68,71 @@ export default function ConfiguracionScreen({ onNavigate }: ConfiguracionScreenP
     alert('Importando datos... (Esta funcionalidad permitiría importar datos desde un archivo)');
   };
 
-  const handleSync = () => {
+  useEffect(() => {
+    const config = printerService.getConfig();
+    if (config) {
+      setPrinterSettings(config);
+    }
+    setPrinterConnected(printerService.isConnected());
+  }, []);
+
+  const handlePrinterConnect = async () => {
+    printerService.configure(printerSettings);
+    const connected = await printerService.connect();
+    setPrinterConnected(connected);
+    
+    if (connected) {
+      alert('Impresora conectada correctamente');
+    } else {
+      alert('Error al conectar con la impresora. Verifique la configuración.');
+    }
+  };
+
+  const handlePrinterTest = async () => {
+    try {
+      const success = await printerService.printTest();
+      if (success) {
+        alert('Página de prueba enviada a la impresora');
+      } else {
+        alert('Error al imprimir página de prueba');
+      }
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handleSync = async () => {
     setSyncStatus({
       ...syncStatus,
-      lastSync: new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       status: 'Sincronizando...'
     });
     
-    setTimeout(() => {
+    try {
+      await syncService.processQueue();
+      const pendingCount = syncService.getPendingCount();
+      const errorCount = syncService.getErrors().length;
+      
+      setSyncStatus({
+        lastSync: new Date().toLocaleString('es-ES', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }),
+        status: pendingCount > 0 
+          ? `${pendingCount} pendientes` 
+          : errorCount > 0
+            ? `${errorCount} errores`
+            : 'Sincronizado',
+        autoSync: syncStatus.autoSync
+      });
+    } catch (error) {
       setSyncStatus({
         ...syncStatus,
-        lastSync: new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-        status: 'Sincronizado'
+        status: 'Error en sincronización'
       });
-    }, 2000);
+    }
   };
 
   return (

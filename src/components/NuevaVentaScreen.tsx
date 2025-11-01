@@ -271,15 +271,15 @@ export default function NuevaVentaScreen({
         <div style={{
           display: 'flex',
           gap: '28px',
-          justifyContent: 'center',
           padding: '34px 40px 40px 40px',
-          maxWidth: '1200px',
+          maxWidth: '1400px',
           width: '100%',
+          margin: '0 auto',
           boxSizing: 'border-box'
         }}>
           {/* Panel izquierdo - Formulario */}
           <div style={{
-            height: '670px',
+            minHeight: '750px',
             width: '351px',
             flexShrink: 0,
             position: 'relative'
@@ -288,7 +288,7 @@ export default function NuevaVentaScreen({
             <div style={{
               position: 'absolute',
               left: 0,
-              top: '634px',
+              top: '714px',
               height: '36px',
               width: '351px',
               display: 'flex',
@@ -360,7 +360,7 @@ export default function NuevaVentaScreen({
               gap: '34px',
               alignItems: 'flex-start',
               left: 0,
-              top: '154px',
+              top: '234px',
               width: '351px'
             }}>
               {/* ¿Aplicar descuento en documento? */}
@@ -925,13 +925,13 @@ export default function NuevaVentaScreen({
               </div>
             </div>
 
-            {/* Cliente, Tipo de Nota, Forma de Pago */}
+            {/* Cliente, Tipo de Nota, Forma de Pago, Estado del Pago */}
             <div style={{
               position: 'absolute',
               left: 0,
               top: 0,
               width: '351px',
-              height: '120px'
+              height: '210px'
             }}>
               {/* Cliente */}
               <p style={{
@@ -1154,33 +1154,37 @@ export default function NuevaVentaScreen({
                 )}
               </div>
 
-              {/* NUEVO: Estado de Pago (Pagado/Pendiente) */}
-              <div style={{
-                position: 'relative',
-                width: '351px',
-                marginTop: '20px'
+              {/* Estado de Pago (Pagado/Pendiente) */}
+              <p style={{
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 600,
+                fontSize: '14px',
+                color: '#1a1a1a',
+                margin: 0,
+                position: 'absolute',
+                left: 0,
+                top: '140px',
+                whiteSpace: 'nowrap'
               }}>
-                <p style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  color: '#1a1a1a',
-                  margin: 0,
-                  marginBottom: '10px'
-                }}>
-                  Estado del Pago
-                </p>
+                Estado del Pago
+              </p>
+              
+              <div style={{
+                position: 'absolute',
+                left: 0,
+                top: '164px',
+                width: '351px',
+                height: '44px'
+              }}>
 
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'center',
-                  width: '100%'
-                }}>
-                  <button 
+                <button 
                     onClick={() => setEstadoPago('pagado')}
                     style={{
-                      flex: 1,
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      width: '170px',
+                      height: '44px',
                       padding: '12px 20px',
                       borderRadius: '8px',
                       border: estadoPago === 'pagado' ? 'none' : '1px solid #e2e8f0',
@@ -1190,7 +1194,7 @@ export default function NuevaVentaScreen({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
-                      transition: 'all 0.2s',
+                      boxSizing: 'border-box',
                       boxShadow: estadoPago === 'pagado' ? '0 2px 8px rgba(7, 188, 19, 0.3)' : 'none'
                     }}
                   >
@@ -1207,7 +1211,11 @@ export default function NuevaVentaScreen({
                   <button 
                     onClick={() => setEstadoPago('pendiente')}
                     style={{
-                      flex: 1,
+                      position: 'absolute',
+                      left: '181px',
+                      top: 0,
+                      width: '170px',
+                      height: '44px',
                       padding: '12px 20px',
                       borderRadius: '8px',
                       border: estadoPago === 'pendiente' ? 'none' : '1px solid #e2e8f0',
@@ -1217,7 +1225,7 @@ export default function NuevaVentaScreen({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
-                      transition: 'all 0.2s',
+                      boxSizing: 'border-box',
                       boxShadow: estadoPago === 'pendiente' ? '0 2px 8px rgba(245, 159, 10, 0.3)' : 'none'
                     }}
                   >
@@ -1230,20 +1238,6 @@ export default function NuevaVentaScreen({
                       ⏳ Pendiente
                     </span>
                   </button>
-                </div>
-
-                {/* Mensaje informativo */}
-                <p style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '10px',
-                  color: '#697b92',
-                  margin: '6px 0 0 0',
-                  fontStyle: 'italic'
-                }}>
-                  {estadoPago === 'pagado' 
-                    ? '✅ Venta pagada - No se creará cobro pendiente' 
-                    : '📋 Se creará cobro pendiente para este cliente'}
-                </p>
               </div>
             </div>
           </div>
@@ -1251,13 +1245,15 @@ export default function NuevaVentaScreen({
           {/* Panel derecho - Nota de Venta */}
           <div style={{
             overflow: 'hidden',
-            height: '670px',
+            minHeight: '750px',
             width: '669px',
             flexShrink: 0,
             position: 'relative',
             backgroundColor: '#ffffff',
             borderRadius: '20px',
-            border: '1px solid #e2e8f0'
+            border: '1px solid #e2e8f0',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             {/* Header */}
             <div style={{
