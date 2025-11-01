@@ -15,10 +15,23 @@ export default function CobrosConfirmacionScreen({ onNavigate, cobranzaActual, o
   const subtotal = cobranzaActual?.subtotal || 0;
 
   const handleImprimir = () => {
+    // Preparar datos para impresión matricial
+    const cobroParaImprimir = {
+      id: `C${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+      cliente: cobranzaActual?.cliente?.empresa || cobranzaActual?.cliente?.nombre || 'Cliente',
+      notas: notasPendientes,
+      metodoPago: cobranzaActual?.metodoPago || 'No especificado',
+      subtotal: subtotal,
+      fecha: new Date().toLocaleDateString('es-ES') + ' ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    // Importar dinámicamente la función de impresión
+    import('./PrintUtils').then(({ imprimirCobro }) => {
+      imprimirCobro(cobroParaImprimir);
+    });
+    
     setShowPrintMessage(true);
     setTimeout(() => setShowPrintMessage(false), 3000);
-    // Aquí iría la lógica real de impresión
-    console.log('Imprimiendo comprobante de cobranza:', cobranzaActual);
   };
 
   const handleVolverACobros = () => {
@@ -54,7 +67,7 @@ export default function CobrosConfirmacionScreen({ onNavigate, cobranzaActual, o
             color: '#1a1a1a',
             margin: 0
           }}>
-            Cobros
+            Cobro Confirmado
           </p>
           <div style={{
             width: '26px',
@@ -74,6 +87,38 @@ export default function CobrosConfirmacionScreen({ onNavigate, cobranzaActual, o
           flexDirection: 'column',
           alignItems: 'center'
         }}>
+          {/* Info del cliente y método de pago */}
+          {cobranzaActual && cobranzaActual.cliente && (
+            <div style={{
+              width: '669px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '20px 24px',
+              marginBottom: '20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#697b92', margin: '0 0 4px 0' }}>
+                  Cliente
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a1a', margin: 0 }}>
+                  {cobranzaActual.cliente.empresa || cobranzaActual.cliente.nombre}
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#697b92', margin: '0 0 4px 0' }}>
+                  Método de Pago
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '16px', color: '#0C2ABF', margin: 0 }}>
+                  {cobranzaActual.metodoPago}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Notas Pendientes panel */}
           <div style={{
             width: '669px',

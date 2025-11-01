@@ -2,55 +2,98 @@ import Navigation from "./Navigation";
 import svgPaths from "../imports/svg-498jmb6ky1";
 import { useState } from 'react';
 import SeleccionarClienteModal from './SeleccionarClienteModal';
+import { Cobro, Cliente } from '../App';
 
 interface CobrosListScreenProps {
   onNavigate: (screen: string) => void;
   onSelectCliente: (cliente: any) => void;
+  cobros: Cobro[];
+  clientes: Cliente[];
 }
 
-export default function CobrosListScreen({ onNavigate, onSelectCliente }: CobrosListScreenProps) {
+export default function CobrosListScreen({ onNavigate, onSelectCliente, cobros, clientes }: CobrosListScreenProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'nombre' | 'porcentaje' | 'fecha'>('nombre');
+  const [sortBy, setSortBy] = useState<'nombre' | 'monto' | 'fecha'>('nombre');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
   
-  const clientes = [
-    { id: '100', nombre: 'ALVAREZ CORDERO CONSUELO', empresa: 'ALVAREZ C. CONSUELO E HIJOS', direccion: 'Barrio Catalunya — Trubia', desde: '24-09-2010', cobrado: 49.99, total: 88.99, porcentaje: 55 },
-    { id: '300', nombre: 'RAMIRO FERNANDEZ', empresa: 'Restaurante La Gallina Loca', direccion: 'C/ Doctor Fleming 1 — Lugones', desde: '01-10-2014', cobrado: 1263.5, total: 1763.5, porcentaje: 72 },
-    { id: '302', nombre: 'SUPERMERCADO EL PINO', empresa: 'Supermercado El Pino', direccion: 'C/ del Centro 11 — Lugones', desde: '14-10-2014', cobrado: 200.00, total: 200.00, porcentaje: 100 },
-    { id: '902', nombre: 'BAR ANTONIO Y MOD', empresa: '"La Taberna"', direccion: 'Calle La Libertad 55 — Oza', desde: '15-10-2014', cobrado: 553.0, total: 753.0, porcentaje: 73 },
-    { id: '---', nombre: 'Almacenes López S.A.', empresa: 'ALVAREZ C. CONSUELO E HIJOS', direccion: 'Barrio Catalunya — Trubia', desde: '24-09-2010', cobrado: 0, total: 0, porcentaje: 74 },
-    { id: '---', nombre: 'Almacenes López S.A.', empresa: 'ALVAREZ C. CONSUELO E HIJOS', direccion: 'Barrio Catalunya — Trubia', desde: '24-09-2010', cobrado: 0, total: 0, porcentaje: 74 },
-    { id: '---', nombre: 'Almacenes López S.A.', empresa: 'ALVAREZ C. CONSUELO E HIJOS', direccion: 'Barrio Catalunya — Trubia', desde: '24-09-2010', cobrado: 0, total: 0, porcentaje: 74 },
-    { id: '---', nombre: 'Almacenes López S.A.', empresa: 'ALVAREZ C. CONSUELO E HIJOS', direccion: 'Barrio Catalunya — Trubia', desde: '24-09-2010', cobrado: 0, total: 0, porcentaje: 74 },
-    { id: '---', nombre: 'Almacenes López S.A.', empresa: 'ALVAREZ C. CONSUELO E HIJOS', direccion: 'Barrio Catalunya — Trubia', desde: '24-09-2010', cobrado: 0, total: 0, porcentaje: 74 },
-    { id: '---', nombre: 'Almacenes López S.A.', empresa: 'ALVAREZ C. CONSUELO E HIJOS', direccion: 'Barrio Catalunya — Trubia', desde: '24-09-2010', cobrado: 0, total: 0, porcentaje: 74 }
-  ];
+  // Calcular totales desde los cobros globales
+  const calcularTotales = () => {
+    const cobradoTotal = cobros
+      .filter(c => c.estado === 'pagado')
+      .reduce((sum, cobro) => {
+        const monto = parseFloat(cobro.monto.replace(',', '.').replace('€', '').trim() || '0');
+        return sum + monto;
+      }, 0);
+    
+    const totalGeneral = cobros.reduce((sum, cobro) => {
+      const monto = parseFloat(cobro.monto.replace(',', '.').replace('€', '').trim() || '0');
+      return sum + monto;
+    }, 0);
+    
+    const porcentaje = totalGeneral > 0 ? Math.round((cobradoTotal / totalGeneral) * 100) : 0;
+    
+    return { cobradoTotal, totalGeneral, porcentaje };
+  };
 
-  const totalCobrado = 2065.49;
-  const totalGeneral = 2805.49;
-  const porcentajeTotal = 74;
+  const { cobradoTotal, totalGeneral, porcentaje } = calcularTotales();
 
-  // Filtrar clientes
-  const clientesFiltrados = clientes
-    .filter(cliente => 
-      cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.direccion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.id.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filtrar clientes que tienen cobros pendientes (para el modal)
+  const clientesConCobrosPendientes = clientes
+    .filter(cliente => {
+      return cobros.some(cobro => 
+        cobro.estado === 'pendiente' && 
+        (cobro.cliente.includes(cliente.nombre) || cobro.cliente.includes(cliente.empresa))
+      );
+    })
+    .map(cliente => {
+      // Encontrar el cobro pendiente de este cliente
+      const cobroPendiente = cobros.find(cobro => 
+        cobro.estado === 'pendiente' && 
+        (cobro.cliente.includes(cliente.nombre) || cobro.cliente.includes(cliente.empresa))
+      );
+      const montoPendiente = cobroPendiente 
+        ? parseFloat(cobroPendiente.monto.replace(',', '.').replace('€', '').trim() || '0')
+        : 0;
+      
+      return {
+        ...cliente,
+        montoPendiente: montoPendiente,
+        cobroId: cobroPendiente?.id
+      };
+    });
+
+  // Transformar cobros a formato de cliente para mostrar
+  const cobrosConFormato = cobros.map(cobro => {
+    const monto = parseFloat(cobro.monto.replace(',', '.').replace('€', '').trim() || '0');
+    return {
+      id: cobro.id,
+      nombre: cobro.cliente,
+      empresa: cobro.cliente,
+      direccion: '',
+      fecha: cobro.fecha,
+      monto: monto,
+      estado: cobro.estado,
+      estadoTexto: cobro.estado === 'pendiente' ? 'Pendiente' : 'Pagado',
+      estadoColor: cobro.estado === 'pendiente' ? '#F59F0A' : '#07BC13'
+    };
+  });
+
+  // Filtrar cobros
+  const cobrosFiltrados = cobrosConFormato
+    .filter(cobro => 
+      cobro.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cobro.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cobro.id.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       if (sortBy === 'nombre') {
         return sortOrder === 'asc' ? a.nombre.localeCompare(b.nombre) : b.nombre.localeCompare(a.nombre);
-      } else if (sortBy === 'porcentaje') {
-        return sortOrder === 'asc' ? a.porcentaje - b.porcentaje : b.porcentaje - a.porcentaje;
+      } else if (sortBy === 'monto') {
+        return sortOrder === 'asc' ? a.monto - b.monto : b.monto - a.monto;
       } else if (sortBy === 'fecha') {
-        const parseDate = (dateStr: string) => {
-          const [day, month, year] = dateStr.split('-');
-          return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).getTime();
-        };
-        return sortOrder === 'asc' ? parseDate(a.desde) - parseDate(b.desde) : parseDate(b.desde) - parseDate(a.desde);
+        return sortOrder === 'asc' ? a.fecha.localeCompare(b.fecha) : b.fecha.localeCompare(a.fecha);
       }
       return 0;
     });
@@ -89,7 +132,8 @@ export default function CobrosListScreen({ onNavigate, onSelectCliente }: Cobros
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                position: 'relative'
               }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -98,6 +142,28 @@ export default function CobrosListScreen({ onNavigate, onSelectCliente }: Cobros
               <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '14px', color: '#ffffff' }}>
                 Nueva Cobranza
               </span>
+              {clientesConCobrosPendientes.length > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  backgroundColor: '#F59F0A',
+                  color: '#ffffff',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  borderRadius: '50%',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid #ffffff',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                }}>
+                  {clientesConCobrosPendientes.length}
+                </span>
+              )}
             </button>
           </div>
           
@@ -106,20 +172,20 @@ export default function CobrosListScreen({ onNavigate, onSelectCliente }: Cobros
           </p>
         </div>
 
-        {/* Total bar */}
+        {/* Total bar - Conectado globalmente */}
         <div style={{ marginBottom: '32px' }}>
           <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '16px', lineHeight: '24px', color: '#1a1a1a', marginBottom: '14px' }}>
             <span style={{ background: 'linear-gradient(to right, #092090, #0C2ABF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Total: {totalCobrado.toFixed(2)} €
+              Cobrado: {cobradoTotal.toFixed(2).replace('.', ',')} €
             </span>{' '}
-            <span style={{ color: '#697b92' }}>de {totalGeneral.toFixed(2)} €</span>{' '}
+            <span style={{ color: '#697b92' }}>de {totalGeneral.toFixed(2).replace('.', ',')} €</span>{' '}
             <span style={{ background: 'linear-gradient(to right, #092090, #0C2ABF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              ({porcentajeTotal}%)
+              ({porcentaje}%)
             </span>
           </p>
           <div style={{ width: '100%', height: '14px', backgroundColor: '#e2e8f0', borderRadius: '15px', overflow: 'hidden' }}>
             <div style={{ 
-              width: `${porcentajeTotal}%`, 
+              width: `${porcentaje}%`, 
               height: '100%', 
               background: 'linear-gradient(to right, #092090, #0C2ABF)',
               borderRadius: '15px'
@@ -194,29 +260,29 @@ export default function CobrosListScreen({ onNavigate, onSelectCliente }: Cobros
                 <path d={svgPaths.p29b92c80} stroke={sortBy === 'fecha' ? '#0C2ABF' : '#697B92'} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
               </svg>
             </div>
-            {/* Ordenar por porcentaje */}
+            {/* Ordenar por monto */}
             <div 
               onClick={() => {
-                if (sortBy === 'porcentaje') {
+                if (sortBy === 'monto') {
                   setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
                 } else {
-                  setSortBy('porcentaje');
+                  setSortBy('monto');
                   setSortOrder('desc');
                 }
               }}
               style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              title="Ordenar por porcentaje"
+              title="Ordenar por monto"
             >
               <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-                <path d={svgPaths.p2489f5b2} stroke={sortBy === 'porcentaje' ? '#0C2ABF' : '#697B92'} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+                <path d={svgPaths.p2489f5b2} stroke={sortBy === 'monto' ? '#0C2ABF' : '#697B92'} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
               </svg>
             </div>
           </div>
         </div>
 
-        {/* Cliente list */}
+        {/* Cobros list - Conectado globalmente */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {clientesFiltrados.length === 0 ? (
+          {cobrosFiltrados.length === 0 ? (
             <div style={{
               backgroundColor: '#ffffff',
               border: '1px solid #e2e8f0',
@@ -228,76 +294,98 @@ export default function CobrosListScreen({ onNavigate, onSelectCliente }: Cobros
                 <path d={svgPaths.p1a6fe300} stroke="#697B92" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" />
               </svg>
               <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '18px', color: '#1a1a1a', margin: '0 0 8px 0' }}>
-                No se encontraron clientes
+                No se encontraron cobros
               </p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', color: '#697b92', margin: 0 }}>
-                Intenta con otros términos de búsqueda
+                {searchTerm ? 'Intenta con otros términos de búsqueda' : 'No hay cobros registrados'}
               </p>
             </div>
           ) : (
-            clientesFiltrados.map((cliente, index) => (
-              <div key={index} style={{
+            cobrosFiltrados.map((cobro, index) => (
+              <div key={cobro.id} style={{
                 backgroundColor: '#ffffff',
                 border: '1px solid #e2e8f0',
                 borderRadius: '10px',
                 padding: '24px',
                 minHeight: '116px',
-                position: 'relative'
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
               }}
               onMouseEnter={() => setHoveredCard(index)}
               onMouseLeave={() => setHoveredCard(null)}
+              onClick={() => {
+                onSelectCliente({ nombre: cobro.nombre, empresa: cobro.empresa });
+                onNavigate('cobros');
+              }}
+              style={{
+                ...{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '24px',
+                  minHeight: '116px',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                },
+                ...(hoveredCard === index ? {
+                  boxShadow: '0 4px 12px rgba(9, 32, 144, 0.1)',
+                  transform: 'translateY(-2px)'
+                } : {})
+              }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                     <path d={svgPaths.p1b638c80} stroke="#0C1C8D" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
                   </svg>
-                  <div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '16px', lineHeight: '14px', color: '#697b92', margin: '0 0 10px 0' }}>
-                      {cliente.id} — {cliente.nombre}
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '16px', lineHeight: '20px', color: '#1a1a1a', margin: '0 0 8px 0' }}>
+                      {cobro.id} — {cobro.nombre}
                     </p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', lineHeight: '14px', color: '#697b92', margin: '0 0 8px 0' }}>
-                      {cliente.empresa}
-                    </p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', lineHeight: '14px', color: '#697b92', margin: 0 }}>
-                      {cliente.direccion}
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', lineHeight: '16px', color: '#697b92', margin: 0 }}>
+                      Fecha: {cobro.fecha}
                     </p>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', lineHeight: '14px', color: '#1a1a1a', margin: 0 }}>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, background: 'linear-gradient(to right, #092090, #0C2ABF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                      Desde:
-                    </span>{' '}
-                    <span style={{ color: '#697b92' }}>{cliente.desde}</span>
-                  </p>
-                </div>
-
-                {/* Progress bar */}
-                <div style={{ position: 'absolute', right: '24px', top: '21px', width: '221px' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '16px', lineHeight: '24px', textAlign: 'right', margin: '0 0 6px 0' }}>
+                {/* Monto y estado */}
+                <div style={{ position: 'absolute', right: '24px', top: '24px', textAlign: 'right' }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '24px', lineHeight: '28px', margin: '0 0 8px 0' }}>
                     <span style={{ background: 'linear-gradient(to right, #092090, #0C2ABF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                      {cliente.cobrado.toFixed(2)} €
-                    </span>{' '}
-                    <span style={{ color: '#697b92' }}>de {cliente.total.toFixed(2)} €</span>{' '}
-                    <span style={{ background: 'linear-gradient(to right, #092090, #0C2ABF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                      ({cliente.porcentaje}%)
+                      {cobro.monto.toFixed(2).replace('.', ',')} €
                     </span>
                   </p>
-                  <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '15px', overflow: 'hidden' }}>
-                    <div style={{ 
-                      width: `${cliente.porcentaje}%`, 
-                      height: '100%', 
-                      background: 'linear-gradient(to right, #092090, #0C2ABF)',
-                      borderRadius: '15px'
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    backgroundColor: cobro.estado === 'pendiente' ? '#FEF3C7' : '#D1FAE5'
+                  }}>
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: cobro.estadoColor
                     }} />
+                    <span style={{
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: cobro.estadoColor
+                    }}>
+                      {cobro.estadoTexto}
+                    </span>
                   </div>
                 </div>
 
                 {/* Visualizar button */}
                 <button 
-                  onClick={() => {
-                    onSelectCliente(cliente);
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectCliente({ nombre: cobro.nombre, empresa: cobro.empresa });
                     onNavigate('cobros');
                   }}
                   style={{
@@ -329,10 +417,10 @@ export default function CobrosListScreen({ onNavigate, onSelectCliente }: Cobros
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal para nueva cobranza - Solo clientes con cobros pendientes */}
       {showModal && (
         <SeleccionarClienteModal
-          clientes={clientes}
+          clientes={clientesConCobrosPendientes}
           onClose={() => setShowModal(false)}
           onSelect={(cliente) => {
             setShowModal(false);

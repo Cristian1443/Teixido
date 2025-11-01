@@ -48,14 +48,14 @@ export default function Navigation({ currentScreen, onNavigate }: NavigationProp
         icon={svgPaths.p535fb40} 
         label="Almacen" 
         viewBox="0 0 15 13"
-        active={currentScreen === 'almacen'}
+        active={currentScreen === 'almacen' || currentScreen === 'articulos' || currentScreen === 'notasAlmacen' || currentScreen === 'resumenStock'}
         onClick={() => onNavigate('almacen')}
       />
       <MenuItem 
         icon={svgPaths.p10a85360} 
         label="Comunica" 
-        active={currentScreen === 'comunica'}
-        onClick={() => onNavigate('comunica')}
+        active={currentScreen === 'comunicacion' || currentScreen === 'clientes'}
+        onClick={() => onNavigate('comunicacion')}
       />
       <MenuItem 
         icon={svgPaths.pc902380} 
@@ -68,7 +68,9 @@ export default function Navigation({ currentScreen, onNavigate }: NavigationProp
       <div style={{ flex: 1 }} />
       
       {/* Settings */}
-      <div style={{ width: '79px', height: '63.672px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', cursor: 'pointer' }}>
+      <div 
+        onClick={() => onNavigate('configuracion')}
+        style={{ width: '79px', height: '63.672px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', cursor: 'pointer' }}>
         <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
           <path d={svgPaths.p3fbdf600} stroke="url(#paint0_linear_settings)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.875" />
           <path d={svgPaths.p3c0282f0} stroke="url(#paint1_linear_settings)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.875" />

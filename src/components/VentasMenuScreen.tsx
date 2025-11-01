@@ -11,12 +11,20 @@ export default function VentasMenuScreen({ onNavigate }: VentasMenuScreenProps) 
       <Navigation currentScreen="ventas" onNavigate={onNavigate} />
 
       {/* Main content */}
-      <div style={{ flex: 1, padding: '60px 140px' }}>
+      <div style={{ 
+        flex: 1, 
+        padding: 'clamp(40px, 6vw, 60px) clamp(30px, 10vw, 140px)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start'
+      }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(7, 105px)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(105px, 105px))',
           gap: '18px',
-          marginTop: '4px'
+          marginTop: '4px',
+          justifyContent: 'center',
+          maxWidth: '100%'
         }}>
           {/* Notas Venta */}
           <MenuCard

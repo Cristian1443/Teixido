@@ -1,18 +1,23 @@
+import { useState } from 'react';
 import imgPublicidadTeixidoFlorCoche from "figma:asset/328faa30d1d4991c86ab0e222dbfeb91bb4cd4f2.png";
 import imgRectangle30 from "figma:asset/53d1dabff9f07d1a5497a42cae4a47f48cf89be2.png";
 
 interface LoginScreenProps {
   onContinue: () => void;
+  onLoginWithEmail?: () => void;
 }
 
-export default function LoginScreen({ onContinue }: LoginScreenProps) {
+export default function LoginScreen({ onContinue, onLoginWithEmail }: LoginScreenProps) {
+  const [isVendorHovered, setIsVendorHovered] = useState(false);
+  const [isAdminHovered, setIsAdminHovered] = useState(false);
+
   return (
     <div style={{
       backgroundColor: '#ffffff',
       position: 'relative',
       width: '100%',
-      maxWidth: '1280px',
-      height: '800px',
+      height: '100vh',
+      maxHeight: '100vh',
       margin: '0 auto',
       display: 'flex',
       overflow: 'hidden'
@@ -20,6 +25,7 @@ export default function LoginScreen({ onContinue }: LoginScreenProps) {
       {/* Left side with image */}
       <div style={{
         width: '50%',
+        minWidth: '320px',
         height: '100%',
         position: 'relative'
       }}>
@@ -37,19 +43,24 @@ export default function LoginScreen({ onContinue }: LoginScreenProps) {
       {/* Right side with login form */}
       <div style={{
         width: '50%',
+        minWidth: '320px',
         height: '100%',
         backgroundColor: '#ffffff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        position: 'relative'
+        position: 'relative',
+        padding: '40px 20px',
+        overflowY: 'auto'
       }}>
         <div style={{
-          width: '333px',
+          width: '100%',
+          maxWidth: '333px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          position: 'relative'
+          position: 'relative',
+          paddingBottom: '80px'
         }}>
           {/* Title */}
           <h1 style={{
@@ -59,22 +70,30 @@ export default function LoginScreen({ onContinue }: LoginScreenProps) {
             lineHeight: '24px',
             color: '#0C2ABF',
             textAlign: 'center',
-            marginBottom: '60px'
+            marginBottom: 'clamp(30px, 6vh, 60px)',
+            marginTop: 0
           }}>
             Iniciar sesión
           </h1>
 
           {/* Vendor button */}
           <button 
-            onClick={onContinue}
+            onClick={onLoginWithEmail || onContinue}
+            onMouseEnter={() => setIsVendorHovered(true)}
+            onMouseLeave={() => setIsVendorHovered(false)}
             style={{
               width: '100%',
               padding: '15px 24px',
-              background: 'linear-gradient(to right, #8bd600, #c4ff57)',
+              background: isVendorHovered 
+                ? 'linear-gradient(to right, #a0e000, #d4ff77)' 
+                : 'linear-gradient(to right, #8bd600, #c4ff57)',
               border: 'none',
               borderRadius: '30px',
               cursor: 'pointer',
-              marginBottom: '68px'
+              marginBottom: 'clamp(40px, 8vh, 68px)',
+              transition: 'all 0.3s ease',
+              transform: isVendorHovered ? 'translateY(-2px)' : 'translateY(0)',
+              boxShadow: isVendorHovered ? '0 4px 12px rgba(139, 214, 0, 0.3)' : 'none'
             }}
           >
             <p style={{
@@ -95,15 +114,16 @@ export default function LoginScreen({ onContinue }: LoginScreenProps) {
             width: '100%',
             height: '14px',
             position: 'relative',
-            marginBottom: '38px',
+            marginBottom: 'clamp(24px, 5vh, 38px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
             <div style={{
               position: 'absolute',
-              left: '71px',
-              width: '84px',
+              left: '0',
+              right: '50%',
+              marginRight: '20px',
               height: '1px',
               backgroundColor: '#E2E8F0'
             }} />
@@ -124,8 +144,9 @@ export default function LoginScreen({ onContinue }: LoginScreenProps) {
             </p>
             <div style={{
               position: 'absolute',
-              right: '71px',
-              width: '84px',
+              left: '50%',
+              right: '0',
+              marginLeft: '20px',
               height: '1px',
               backgroundColor: '#E2E8F0'
             }} />
@@ -134,13 +155,20 @@ export default function LoginScreen({ onContinue }: LoginScreenProps) {
           {/* Admin button */}
           <button 
             onClick={onContinue}
+            onMouseEnter={() => setIsAdminHovered(true)}
+            onMouseLeave={() => setIsAdminHovered(false)}
             style={{
               width: '100%',
               padding: '15px 24px',
-              backgroundColor: '#0C2ABF',
+              background: isAdminHovered
+                ? 'linear-gradient(to right, #0a2ba0, #0d2ed0)'
+                : 'linear-gradient(to right, #092090, #0C2ABF)',
               border: 'none',
               borderRadius: '30px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              transform: isAdminHovered ? 'translateY(-2px)' : 'translateY(0)',
+              boxShadow: isAdminHovered ? '0 4px 12px rgba(12, 42, 191, 0.3)' : 'none'
             }}
           >
             <p style={{
@@ -156,10 +184,21 @@ export default function LoginScreen({ onContinue }: LoginScreenProps) {
             </p>
           </button>
 
+          {/* Help text */}
+          <p style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '12px',
+            color: '#94a3b8',
+            textAlign: 'center',
+            marginTop: 'clamp(20px, 4vh, 32px)',
+            marginBottom: 'clamp(20px, 4vh, 32px)'
+          }}>
+            ¿Necesitas ayuda? Contacta con soporte
+          </p>
+
           {/* Logo at bottom */}
           <div style={{
-            position: 'absolute',
-            bottom: '-200px',
+            marginTop: 'auto',
             width: '204px',
             height: '39px'
           }}>

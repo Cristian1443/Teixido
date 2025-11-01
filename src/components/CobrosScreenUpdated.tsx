@@ -9,11 +9,9 @@ interface CobrosScreenProps {
   notasVenta?: any[];
   onUpdateNotaVenta?: (id: string, estado: 'pendiente' | 'cerrada' | 'anulada') => void;
   onAddCobro?: (cobro: any) => void;
-  cobros?: any[];
-  onUpdateCobro?: (id: string, estado: 'pendiente' | 'pagado') => void;
 }
 
-export default function CobrosScreen({ onNavigate, clienteSeleccionado, onConfirmarCobranza, notasVenta = [], onUpdateNotaVenta, onAddCobro, cobros = [], onUpdateCobro }: CobrosScreenProps) {
+export default function CobrosScreen({ onNavigate, clienteSeleccionado, onConfirmarCobranza, notasVenta = [], onUpdateNotaVenta, onAddCobro }: CobrosScreenProps) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
@@ -67,21 +65,12 @@ export default function CobrosScreen({ onNavigate, clienteSeleccionado, onConfir
       subtotal: subtotal
     };
 
-    // Buscar si existe un cobro pendiente para este cliente y actualizarlo
-    const cobroPendiente = cobros.find(c => 
-      c.estado === 'pendiente' && 
-      (c.cliente.includes(clienteSeleccionado.empresa) || c.cliente.includes(clienteSeleccionado.nombre))
-    );
-
-    if (cobroPendiente && onUpdateCobro) {
-      // ACTUALIZAR el cobro existente de 'pendiente' a 'pagado'
-      onUpdateCobro(cobroPendiente.id, 'pagado');
-    } else if (onAddCobro) {
-      // Si no existe cobro pendiente, crear uno nuevo como pagado
+    // Crear registro de cobro
+    if (onAddCobro) {
       const nuevoCobro = {
         id: `C${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-        cliente: clienteSeleccionado.empresa || clienteSeleccionado.nombre,
-        monto: `${subtotal.toFixed(2).replace('.', ',')} €`,
+        cliente: clienteSeleccionado.empresa,
+        monto: `${subtotal.toFixed(2)} €`,
         fecha: 'Hoy',
         estado: 'pagado' as const
       };

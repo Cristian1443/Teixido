@@ -3,6 +3,7 @@ import svgPaths from "../imports/svg-wdyebm1qzk";
 import img from "figma:asset/64e22b9a1eb7f86d37f38817111a710f2aedc975.png";
 import AnularNotaModal from "./AnularNotaModal";
 import CerrarOperacionModal from "./CerrarOperacionModal";
+import { imprimirNotaVenta } from "./PrintUtils";
 
 interface VerNotaScreenProps {
   onNavigate: (screen: string) => void;
@@ -58,7 +59,37 @@ export default function VerNotaScreen({ onNavigate, ventaData, onModificar, onAn
   };
 
   const handleImprimir = () => {
-    window.print();
+    // Preparar datos para impresión matricial
+    const notaParaImprimir = {
+      id: ventaData?.id || 'P000',
+      cliente: {
+        codigo: cliente.codigo || cliente.id || '',
+        nombre: cliente.nombre || cliente.empresa || '',
+        razonSocial: cliente.razonSocial || cliente.empresa || '',
+        nif: cliente.nif || '',
+        direccion: cliente.direccion || '',
+        telefono: cliente.telefono || ''
+      },
+      articulos: articulos.map((art: any) => ({
+        nombre: art.nombre || '',
+        cantidad: art.cantidad || 0,
+        valor: art.valor,
+        precioUnitario: art.precioUnitario,
+        descuento: art.descuento || 0,
+        tipoDescuento: art.tipoDescuento || 'pesos',
+        nota: art.nota
+      })),
+      totales: {
+        descuentos: totales.descuentos || '0,00',
+        iva: totales.iva || '0,00',
+        total: totales.total || '0,00'
+      },
+      tipoNota,
+      formaPago,
+      fecha: new Date().toLocaleDateString('es-ES') + ' ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    imprimirNotaVenta(notaParaImprimir);
   };
 
   const handleAnularClick = () => {
@@ -362,14 +393,14 @@ export default function VerNotaScreen({ onNavigate, ventaData, onModificar, onAn
         {/* Content wrapper */}
         <div style={{
           flex: 1,
-          padding: '34px 60px 60px 60px',
+          padding: 'clamp(20px, 3vw, 34px) clamp(30px, 5vw, 60px) clamp(40px, 5vw, 60px) clamp(30px, 5vw, 60px)',
           display: 'flex',
-          gap: '60px',
+          gap: 'clamp(20px, 4vw, 60px)',
           maxWidth: '1280px'
         }}>
           {/* Left column - Nota de Venta Card */}
           <div style={{
-            flex: '0 0 669px',
+            flex: '0 0 clamp(500px, 52%, 669px)',
             display: 'flex',
             flexDirection: 'column'
           }}>
@@ -796,7 +827,7 @@ export default function VerNotaScreen({ onNavigate, ventaData, onModificar, onAn
 
           {/* Right column - Botones y Totales */}
           <div style={{
-            flex: '0 0 351px',
+            flex: '0 0 clamp(280px, 27%, 351px)',
             display: 'flex',
             flexDirection: 'column',
             gap: '16px'
