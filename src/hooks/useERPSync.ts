@@ -1,6 +1,3 @@
-/**
- * Hook para sincronización con ERP Verial
- */
 import { useState, useEffect, useCallback } from 'react';
 import * as erpService from '../services/erp.service';
 
@@ -21,9 +18,6 @@ export function useERPSync() {
 
   const [modoOffline, setModoOffline] = useState(false);
 
-  /**
-   * Sincronizar clientes del ERP
-   */
   const sincronizarClientes = useCallback(async () => {
     try {
       setSyncStatus(prev => ({ ...prev, clientes: 'syncing', error: null }));
@@ -58,9 +52,6 @@ export function useERPSync() {
     }
   }, []);
 
-  /**
-   * Sincronizar artículos del ERP
-   */
   const sincronizarArticulos = useCallback(async () => {
     try {
       setSyncStatus(prev => ({ ...prev, articulos: 'syncing', error: null }));
@@ -95,9 +86,6 @@ export function useERPSync() {
     }
   }, []);
 
-  /**
-   * Enviar venta al ERP
-   */
   const enviarVentaAlERP = useCallback(async (ventaData: any) => {
     try {
       console.log('📤 Enviando venta al ERP...', ventaData);
@@ -157,9 +145,6 @@ export function useERPSync() {
     }
   }, []);
 
-  /**
-   * Registrar pago en ERP
-   */
   const registrarPagoEnERP = useCallback(async (cobro: any, notaVentaId: string) => {
     try {
       console.log('💰 Registrando pago en ERP...', cobro);
@@ -187,9 +172,6 @@ export function useERPSync() {
     }
   }, []);
 
-  /**
-   * Sincronización inicial al cargar la app
-   */
   useEffect(() => {
     const sincronizacionInicial = async () => {
       console.log('🔄 Cargando datos de la aplicación...');
@@ -218,9 +200,6 @@ export function useERPSync() {
   };
 }
 
-/**
- * Mapeo de métodos de pago Local → ERP
- */
 function obtenerIDMetodoPago(formaPago: string): number {
   const mapeo: Record<string, number> = {
     'Efectivo': 1,

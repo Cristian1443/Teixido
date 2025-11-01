@@ -1,27 +1,20 @@
 /**
  * Servicio de integración con ERP Verial
- * Documentación: Web Service TEST (Postman Collection)
+ * @author 4Ventas Development Team
  */
+
+// ============================================================================
+// CONFIGURACIÓN - Modificar estos valores según tu entorno
+// ============================================================================
 
 const ERP_BASE_URL = 'http://x.verial.org:8000/WcfServiceLibraryVerial';
-
-// TODO: Implementar autenticación real - por ahora usamos sesión de prueba
 let SESSION_ID = '18';
+const ERP_ENABLED = false; // true = conexión ERP | false = modo offline
 
-// CONFIGURACIÓN: Habilitar/deshabilitar conexión con ERP
-// En desarrollo, usar false para trabajar 100% offline con datos mock
-const ERP_ENABLED = false; // Cambiar a true cuando el ERP esté disponible
-
-/**
- * Establece el ID de sesión para las peticiones al ERP
- */
 export function setSessionId(sessionId: string) {
   SESSION_ID = sessionId;
 }
 
-/**
- * Obtiene el ID de sesión actual
- */
 export function getSessionId(): string {
   return SESSION_ID;
 }
@@ -56,18 +49,11 @@ export interface ClienteERP {
   ID_MetodoPago?: number;
 }
 
-/**
- * Obtiene todos los clientes del ERP
- * @param id_cliente - 0 para todos los clientes, o ID específico
- * @param fecha - Fecha de sincronización (formato: YYYY-MM-DD)
- * @param hora - Hora de sincronización (formato: HH:MM)
- */
 export async function getClientes(
   id_cliente: number = 0,
   fecha?: string,
   hora?: string
 ): Promise<ClienteERP[]> {
-  // Si ERP está deshabilitado, retornar datos mock
   if (!ERP_ENABLED) {
     console.log('💾 Usando datos MOCK de clientes (ERP deshabilitado)');
     return getMockClientes();
@@ -97,9 +83,6 @@ export async function getClientes(
   }
 }
 
-/**
- * Crea un nuevo cliente en el ERP
- */
 export async function crearCliente(cliente: Partial<ClienteERP>): Promise<any> {
   try {
     const response = await fetch(`${ERP_BASE_URL}/NuevoClienteWS`, {
@@ -142,11 +125,7 @@ export interface ArticuloERP {
   // ... otros campos según la respuesta del ERP
 }
 
-/**
- * Obtiene todos los artículos del ERP
- */
 export async function getArticulos(fecha?: string, hora?: string): Promise<ArticuloERP[]> {
-  // Si ERP está deshabilitado, retornar datos mock
   if (!ERP_ENABLED) {
     console.log('💾 Usando datos MOCK de artículos (ERP deshabilitado)');
     return getMockArticulos();
@@ -176,9 +155,6 @@ export async function getArticulos(fecha?: string, hora?: string): Promise<Artic
   }
 }
 
-/**
- * Obtiene el stock de artículos
- */
 export async function getStockArticulos(id_articulo: number = 0): Promise<any> {
   try {
     const url = `${ERP_BASE_URL}/GetStockArticulosWS?x=${SESSION_ID}&id_articulo=${id_articulo}`;
@@ -206,9 +182,6 @@ export interface MetodoPagoERP {
   // ... otros campos
 }
 
-/**
- * Obtiene los métodos de pago disponibles en el ERP
- */
 export async function getMetodosPago(): Promise<MetodoPagoERP[]> {
   try {
     const url = `${ERP_BASE_URL}/GetMetodosPagoWS?x=${SESSION_ID}`;
@@ -290,9 +263,6 @@ export interface DocumentoCliente {
   Pagos?: PagoDocumento[];
 }
 
-/**
- * Crea un nuevo documento (venta/pedido) en el ERP
- */
 export async function crearDocumentoVenta(documento: DocumentoCliente): Promise<any> {
   try {
     const body = {
@@ -325,9 +295,6 @@ export async function crearDocumentoVenta(documento: DocumentoCliente): Promise<
   }
 }
 
-/**
- * Actualiza un documento existente
- */
 export async function actualizarDocumento(id: number, cambios: any): Promise<any> {
   try {
     const response = await fetch(`${ERP_BASE_URL}/UpdateDocClienteWS`, {
@@ -367,9 +334,6 @@ export interface NuevoPago {
   Importe: number;
 }
 
-/**
- * Registra un nuevo pago en el ERP
- */
 export async function registrarPago(pago: NuevoPago): Promise<any> {
   try {
     console.log('💰 Registrando pago en ERP:', pago);
@@ -403,9 +367,6 @@ export async function registrarPago(pago: NuevoPago): Promise<any> {
 // HISTORIAL
 // ============================================================================
 
-/**
- * Obtiene el historial de pedidos de un cliente
- */
 export async function getHistorialPedidos(
   id_cliente: number,
   fechaDesde: string,
@@ -429,9 +390,6 @@ export async function getHistorialPedidos(
   }
 }
 
-/**
- * Verifica el estado de pedidos
- */
 export async function getEstadoPedidos(pedidos: Array<{ Id?: number; Referencia?: string }>): Promise<any> {
   try {
     const response = await fetch(`${ERP_BASE_URL}/EstadoPedidosWS`, {
@@ -460,9 +418,6 @@ export async function getEstadoPedidos(pedidos: Array<{ Id?: number; Referencia?
 // UTILIDADES
 // ============================================================================
 
-/**
- * Obtiene la próxima numeración de documentos
- */
 export async function getNextNumDocs(): Promise<any> {
   try {
     const url = `${ERP_BASE_URL}/GetNextNumDocsWS?x=${SESSION_ID}`;
@@ -480,9 +435,6 @@ export async function getNextNumDocs(): Promise<any> {
   }
 }
 
-/**
- * Obtiene la versión del Web Service
- */
 export async function getVersion(): Promise<string> {
   try {
     const url = `${ERP_BASE_URL}/GetVersionWS?x=${SESSION_ID}`;
@@ -504,12 +456,9 @@ export async function getVersion(): Promise<string> {
 }
 
 // ============================================================================
-// MAPPERS - Convertir datos entre formato local y formato ERP
+// MAPPERS
 // ============================================================================
 
-/**
- * Convierte un cliente del ERP al formato local
- */
 export function mapearClienteERPaLocal(clienteERP: ClienteERP) {
   return {
     id: clienteERP.Id.toString(),
@@ -526,9 +475,6 @@ export function mapearClienteERPaLocal(clienteERP: ClienteERP) {
   };
 }
 
-/**
- * Convierte un artículo del ERP al formato local
- */
 export function mapearArticuloERPaLocal(articuloERP: ArticuloERP) {
   return {
     id: articuloERP.Id.toString(),
@@ -542,12 +488,9 @@ export function mapearArticuloERPaLocal(articuloERP: ArticuloERP) {
 }
 
 // ============================================================================
-// DATOS MOCK - Para desarrollo offline
+// DATOS MOCK
 // ============================================================================
 
-/**
- * Datos mock de clientes (cuando ERP no está disponible)
- */
 function getMockClientes(): ClienteERP[] {
   return [
     {
@@ -658,9 +601,6 @@ function getMockClientes(): ClienteERP[] {
   ];
 }
 
-/**
- * Datos mock de artículos (cuando ERP no está disponible)
- */
 function getMockArticulos(): ArticuloERP[] {
   return [
     {
