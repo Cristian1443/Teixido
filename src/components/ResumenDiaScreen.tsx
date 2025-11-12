@@ -16,6 +16,35 @@ export default function ResumenDiaScreen({ onNavigate, notasVenta, gastos, cobro
   const [activeTab, setActiveTab] = useState('Totales del Día');
   const [selectedPeriod, setSelectedPeriod] = useState('Hoy');
 
+  // Calcular totales dinámicamente desde los datos reales
+  const calcularTotalVentas = () => {
+    return notasVenta
+      .filter(n => n.estado !== 'anulada')
+      .reduce((sum, nota) => {
+        const precio = parseFloat(nota.precio.replace(',', '.').replace('€', '').trim() || '0');
+        return sum + precio;
+      }, 0);
+  };
+
+  const calcularTotalGastos = () => {
+    return gastos.reduce((sum, gasto) => {
+      const precio = parseFloat(gasto.precio.replace(',', '.').replace('€', '').trim() || '0');
+      return sum + precio;
+    }, 0);
+  };
+
+  const totalVentas = calcularTotalVentas();
+  const totalGastos = calcularTotalGastos();
+  const numeroVentas = notasVenta.filter(n => n.estado !== 'anulada').length;
+  const ventasPendientes = notasVenta.filter(n => n.estado === 'pendiente').length;
+  
+  // Calcular clientes únicos visitados hoy (basado en clienteId o nombre)
+  const clientesVisitadosHoy = new Set(
+    notasVenta
+      .filter(n => n.estado !== 'anulada')
+      .map(n => n.clienteId || n.cliente)
+  ).size;
+
   const filteredNotasVenta = notasVenta.filter((nota) =>
     nota.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
     nota.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -207,7 +236,7 @@ export default function ResumenDiaScreen({ onNavigate, notasVenta, gastos, cobro
           >
             <StatsCard 
               title="Ventas Hoy"
-              value="2.450,00 €"
+              value={`${totalVentas.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')} €`}
               change="+12% vs ayer"
               changeColor="#91e600"
               bgGradient="linear-gradient(to right, #092090, #0C2ABF)"
@@ -219,7 +248,7 @@ export default function ResumenDiaScreen({ onNavigate, notasVenta, gastos, cobro
           >
             <StatsCard 
               title="Gastos Hoy"
-              value="180,50 €"
+              value={`${totalGastos.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')} €`}
               change="-8% vs ayer"
               changeColor="#f59f0a"
               titleBg="#0C2ABF"
@@ -231,8 +260,8 @@ export default function ResumenDiaScreen({ onNavigate, notasVenta, gastos, cobro
           >
             <StatsCard 
               title="Nº de Ventas"
-              value="8"
-              change="+2 vs ayer"
+              value={numeroVentas.toString()}
+              change={ventasPendientes > 0 ? `${ventasPendientes} pendientes` : '+2 vs ayer'}
               changeColor="#91e600"
             />
           </div>
@@ -242,7 +271,7 @@ export default function ResumenDiaScreen({ onNavigate, notasVenta, gastos, cobro
           >
             <StatsCard 
               title="Clientes Visitados"
-              value="12"
+              value={clientesVisitadosHoy.toString()}
               change="Objetivo: 15 clientes"
               changeColor="#697b92"
             />
@@ -353,7 +382,7 @@ export default function ResumenDiaScreen({ onNavigate, notasVenta, gastos, cobro
               <div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', color: '#697b92', margin: 0 }}>Total Ventas</p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '24px', color: '#1a1a1a', margin: '4px 0 0 0' }}>
-                  2.450,00 €
+                  {totalVentas.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')} €
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -393,7 +422,7 @@ export default function ResumenDiaScreen({ onNavigate, notasVenta, gastos, cobro
               <div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', color: '#697b92', margin: 0 }}>Total Gastos</p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '24px', color: '#f59e0b', margin: '4px 0 0 0' }}>
-                  180,50 €
+                  {totalGastos.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' €'}
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
